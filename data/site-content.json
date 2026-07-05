@@ -1,18 +1,18 @@
 {
   "drop": {
-    "eyebrow": "Juillet 2026 · Précommande jusqu'au 30 juin",
+    "eyebrow": "septembre 2026 · Précommande jusqu'au 31 Août",
     "subtitle": "50 exemplaires seulement, sérigraphiés à la main dans notre atelier nantais.",
     "gif": "assets/images/next-drop.gif",
-    "label": "Tirage juillet",
+    "label": "Tirage septembre",
     "textile": "Tee-shirt blanc, impression bordeaux",
     "coupe": "Oversize ou standard",
     "tailles": "Du XS au XXL",
-    "deadlineShort": "30 juin",
-    "deadlineFull": "30 juin 2026",
+    "deadlineShort": "31 Août",
+    "deadlineFull": "31 Août 2026",
     "badge": "Édition limitée · 50 exemplaires",
-    "productTitle": "Tirage Juillet — T-shirt blanc",
+    "productTitle": "T-Shirt - DOWN STREET",
     "price": "34,90 €",
-    "stockNote": "Précommande jusqu'au 30 juin. Une fois la campagne close, ton tee-shirt est sérigraphié à la main puis expédié — compte 2 à 3 semaines. Pas d'échange ni de remboursement, alors choisis bien ta taille.",
+    "stockNote": "Précommande jusqu'au 31 Août. Une fois la campagne close, ton tee-shirt est sérigraphié à la main puis expédié — compte 3 à 4 semaines. Pas d'échange ni de remboursement, alors choisis bien ta taille.",
     "productImages": [
       "assets/images/product-IMG63471.jpg",
       "assets/images/product-IMG63481.jpg",
@@ -22,5 +22,12 @@
       "assets/images/product-IMG63541.jpg"
     ]
   },
-  "pastCollections": []
+  "pastCollections": [
+    {
+      "image": "/assets/images/SPARKER_-_LOURENCO_-_DOS(1).jpg",
+      "title": "T-shirt - No need to hurry",
+      "period": "Novembre 2025 - 11 exemplaires",
+      "description": "Tout premier T-shirt de lancement sur le site"
+    }
+  ]
 }
