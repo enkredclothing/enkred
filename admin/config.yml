@@ -1,0 +1,47 @@
+backend:
+  name: github
+  repo: enkredclothing/enkred
+  branch: main
+
+media_folder: "assets/images"
+public_folder: "/assets/images"
+
+collections:
+  - name: "site"
+    label: "Site Enkred"
+    files:
+      - name: "content"
+        label: "Tirage en cours & Archives"
+        file: "data/site-content.json"
+        fields:
+          - label: "Tirage en cours"
+            name: "drop"
+            widget: "object"
+            fields:
+              - { label: "Texte au-dessus du titre (accueil)", name: "eyebrow", widget: "string" }
+              - { label: "Sous-titre (accueil)", name: "subtitle", widget: "string" }
+              - { label: "GIF du prochain tirage", name: "gif", widget: "image" }
+              - { label: "Étiquette (ex: Tirage juillet)", name: "label", widget: "string" }
+              - { label: "Textile", name: "textile", widget: "string" }
+              - { label: "Coupe", name: "coupe", widget: "string" }
+              - { label: "Tailles", name: "tailles", widget: "string" }
+              - { label: "Date limite courte (ex: 30 juin)", name: "deadlineShort", widget: "string" }
+              - { label: "Date limite complète (ex: 30 juin 2026)", name: "deadlineFull", widget: "string" }
+              - { label: "Badge (page produit)", name: "badge", widget: "string" }
+              - { label: "Titre du produit", name: "productTitle", widget: "string" }
+              - { label: "Nombre maximum d'exemplaires", name: "maxUnits", widget: "number", value_type: "int" }
+              - { label: "Prix", name: "price", widget: "string" }
+              - { label: "Texte sous le prix", name: "stockNote", widget: "text" }
+              - label: "Photos du produit (6 recommandées)"
+                name: "productImages"
+                widget: "list"
+                field: { label: "Photo", name: "image", widget: "image" }
+          - label: "Collections passées"
+            name: "pastCollections"
+            widget: "list"
+            label_singular: "Collection"
+            fields:
+              - { label: "Photo", name: "image", widget: "image" }
+              - { label: "Titre", name: "title", widget: "string" }
+              - { label: "Période (ex: Juillet 2026 · 50 exemplaires)", name: "period", widget: "string" }
+              - { label: "Description", name: "description", widget: "text" }
