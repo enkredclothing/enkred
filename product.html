@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="assets/images/favicon-source.png">
+<title>Tirage en cours — ENKRED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root{
+    --petrol:#1B3A4B;
+    --petrol-dark:#122733;
+    --slate:#5B84A0;
+    --bordeaux:#2C5F7C;
+    --ecru:#FAF9F6;
+    --ink:#12242E;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Inter',sans-serif; background:var(--ecru); color:var(--ink); line-height:1.6; }
+  .halftone-overlay{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image: radial-gradient(var(--petrol) 1px, transparent 1px);
+    background-size: 16px 16px;
+    opacity:.05;
+  }
+  img{ max-width:100%; display:block; }
+  .serif{ font-family:'Playfair Display',serif; }
+
+  .announce{ background:var(--slate); color:var(--ecru); text-align:center; font-size:13px; padding:10px 16px; }
+  header{
+    display:flex; align-items:center; justify-content:space-between; padding:18px 40px;
+    background:var(--ecru); border-bottom:1px solid rgba(27,58,75,.08);
+  }
+  .logo{ height:44px; }
+  nav{ display:flex; gap:36px; }
+  nav a{ text-decoration:none; color:var(--petrol); font-size:15px; font-weight:500; }
+  nav a.active{ color:var(--bordeaux); }
+
+  .product{
+    display:grid; grid-template-columns:1.1fr 1fr; gap:56px;
+    max-width:1100px; margin:56px auto; padding:0 24px;
+  }
+  @media (max-width:860px){ .product{ grid-template-columns:1fr; } }
+
+  .gallery-main{ border-radius:8px; overflow:hidden; background:#fff; margin-bottom:12px; aspect-ratio:4/5; }
+  .gallery-main img{ width:100%; height:100%; object-fit:cover; }
+  .gallery-thumbs{ display:flex; gap:10px; }
+  .gallery-thumbs img{
+    width:64px; height:64px; object-fit:cover; border-radius:4px; cursor:pointer;
+    border:2px solid transparent; opacity:.7; transition:opacity .2s, border-color .2s;
+  }
+  .gallery-thumbs img:hover{ opacity:1; }
+  .gallery-thumbs img.active{ opacity:1; border-color:var(--bordeaux); }
+
+  .badge{
+    display:inline-block; background:var(--bordeaux); color:#fff; font-size:11px;
+    letter-spacing:.08em; text-transform:uppercase; padding:5px 10px; border-radius:2px; margin-bottom:14px;
+  }
+  .product-info h1{ font-size:32px; color:var(--petrol); margin-bottom:6px; }
+  .price{ font-size:20px; color:var(--bordeaux); font-weight:600; margin-bottom:18px; }
+  .stock-note{ font-size:13.5px; color:#5a6a70; margin-bottom:24px; padding:10px 14px; background:#fff; border-left:3px solid var(--slate); border-radius:2px; }
+  .stock-gauge{ margin-bottom:20px; position:relative; }
+  .stock-gauge-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; font-family:'Playfair Display',serif; }
+  .stock-gauge-top span:first-child{ font-size:16px; color:var(--petrol); }
+  .stock-gauge-top span:last-child{ font-size:12px; font-family:'Inter',sans-serif; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; }
+  .stock-gauge-top span:last-child.urgent{ color:var(--bordeaux); font-weight:600; }
+  .stock-gauge-track-wrap{ position:relative; margin-top:26px; }
+  .stock-gauge-track{ height:10px; background:#e9e5da; border-radius:5px; overflow:hidden; position:relative; }
+  .stock-gauge-fill{ position:absolute; top:0; left:0; height:100%; width:0%; background:var(--bordeaux); border-radius:5px; animation:stockFillDrain 6.5s ease-in-out infinite; }
+  .stock-gauge-fill.settled{ animation:none; transition:width 1.3s cubic-bezier(.2,.8,.2,1); }
+  #stockGaugeSqueegee{ position:absolute; top:-26px; left:0%; width:34px; animation:stockSqueegeeMove 6.5s ease-in-out infinite; }
+  #stockGaugeSqueegee.settled{ animation:none; transition:left 1.3s cubic-bezier(.2,.8,.2,1); }
+  @keyframes stockFillDrain{ 0%,100%{ width:0%; } 50%{ width:100%; } }
+  @keyframes stockSqueegeeMove{ 0%,100%{ left:0%; } 50%{ left:calc(92% - 20px); } }
+
+  .field-group{ margin-bottom:18px; }
+  .field-group label{ display:block; font-size:13px; font-weight:600; color:var(--petrol); margin-bottom:6px; }
+  select, input[type=text], input[type=email], input[type=number], textarea{
+    width:100%; padding:11px 12px; border:1px solid rgba(27,58,75,.2); border-radius:4px;
+    font-family:'Inter',sans-serif; font-size:14.5px; background:#fff; color:var(--ink);
+  }
+  select:focus, input:focus, textarea:focus{ outline:none; border-color:var(--slate); }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:10px; width:100%;
+    font-family:'Playfair Display',serif; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    font-size:13.5px; padding:16px 32px; border-radius:2px; border:none; cursor:pointer;
+    transition:transform .2s ease;
+  }
+  .btn-primary{ background:var(--bordeaux); color:#fff; margin-top:6px; }
+  .btn-primary:hover{ transform:translateY(-1px); }
+  .btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
+
+  .confirm-box{
+    display:none; background:#eef5f0; border:1px solid #bcd9c4; border-radius:6px;
+    padding:16px 18px; margin-top:16px; font-size:14px; color:#2f5c3d;
+  }
+  .confirm-box.visible{ display:block; }
+
+  .details{ max-width:1100px; margin:0 auto 80px; padding:0 24px; }
+  .details-grid{ display:grid; grid-template-columns:1fr 1fr; gap:40px; border-top:1px solid rgba(27,58,75,.1); padding-top:40px; }
+  @media (max-width:860px){ .details-grid{ grid-template-columns:1fr; } }
+  .details h3{ font-size:18px; color:var(--petrol); margin-bottom:10px; }
+  .details ul{ list-style:none; }
+  .details li{ font-size:14px; color:#4a5a61; padding:6px 0; border-bottom:1px solid rgba(27,58,75,.06); }
+  .cert-row{ display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+  .cert-row span{ font-size:11px; color:#8a9aa1; border:1px solid rgba(27,58,75,.15); padding:6px 10px; border-radius:20px; }
+
+  footer{ background:var(--ecru); padding:64px 40px 32px; border-top:1px solid rgba(27,58,75,.08); }
+  .footer-grid{ display:grid; grid-template-columns:1.2fr 1fr 1fr 1.2fr; gap:36px; max-width:1080px; margin:0 auto 40px; }
+  .footer-grid img{ height:38px; margin-bottom:12px; }
+  .footer-grid h5{ font-family:'Playfair Display',serif; font-size:15px; color:var(--petrol); margin-bottom:14px; }
+  .footer-grid p, .footer-grid a{ font-size:13.5px; color:#5a6a70; text-decoration:none; display:block; margin-bottom:8px; }
+  .footer-grid a:hover{ color:var(--bordeaux); }
+  .footer-bottom{ text-align:center; font-size:12px; color:#8a9aa1; border-top:1px solid rgba(27,58,75,.08); padding-top:24px; max-width:1080px; margin:0 auto; }
+  @media (max-width:800px){ .footer-grid{ grid-template-columns:1fr 1fr; } }
+  .newsletter-form{ display:flex; gap:8px; margin-top:10px; }
+  .newsletter-form input{ flex:1; padding:9px 10px; font-size:13px; border:1px solid rgba(27,58,75,.18); border-radius:3px; margin:0; }
+  .newsletter-form button{
+    background:var(--petrol); color:#fff; border:none; border-radius:3px; padding:0 14px; font-size:13px; cursor:pointer;
+  }
+  .newsletter-note{ font-size:12px; color:var(--slate); margin-top:8px; display:none; }
+  .newsletter-note.visible{ display:block; }
+  body{ opacity:0; }
+  body.page-ready{ opacity:1; transition:opacity .35s ease; }
+  body.page-leaving{ opacity:0; transition:opacity .25s ease; }
+  .enkred-cursor-icon{
+    position:fixed; top:0; left:0; width:30px; pointer-events:none; z-index:9999;
+    transform:translate(-70%,-60%);
+  }
+  body.has-custom-cursor, body.has-custom-cursor a, body.has-custom-cursor button{ cursor:none; }
+  .halftone-glow{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image: radial-gradient(#1B3A4B 1px, transparent 1px);
+    background-size: 16px 16px; opacity:.22;
+    -webkit-mask-image: radial-gradient(circle 160px at var(--mx,50%) var(--my,50%), black 0%, transparent 100%);
+    mask-image: radial-gradient(circle 160px at var(--mx,50%) var(--my,50%), black 0%, transparent 100%);
+  }
+  /* ---------- Mobile nav ---------- */
+  header{ position:relative; }
+  .nav-toggle{
+    display:none; flex-direction:column; justify-content:center; gap:5px;
+    width:34px; height:34px; background:none; border:none; cursor:pointer; padding:0;
+  }
+  .nav-toggle span{ display:block; width:100%; height:2px; background:var(--petrol); }
+  @media (max-width:820px){
+    .nav-toggle{ display:flex; }
+    nav{
+      display:none; position:absolute; top:100%; left:0; right:0;
+      flex-direction:column; gap:0; background:var(--ecru);
+      border-bottom:1px solid rgba(27,58,75,.08); z-index:200;
+    }
+    nav.nav-open{ display:flex; }
+    nav a{ padding:16px 20px; border-top:1px solid rgba(27,58,75,.06); }
+    header{ padding:14px 20px; }
+  }
+  @media (max-width:540px){
+    .footer-grid{ grid-template-columns:1fr; gap:28px; }
+  }
+</style>
+<noscript><style>body{opacity:1!important;}</style></noscript>
+</head>
+<body>
+<div class="halftone-overlay"></div>
+
+<div class="announce">Un tee-shirt unique sérigraphié dans notre atelier, c'est ici que ça se passe</div>
+
+<header>
+  <a href="index.html"><img src="assets/images/logo-full.png" alt="Enkred" class="logo"></a>
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="product.html" class="active">Tirage en cours</a>
+    <a href="collections.html">Drops</a>
+    <a href="about.html">À propos</a>
+  </nav>
+  <button class="nav-toggle" id="navToggle" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<section class="product">
+  <div>
+    <div class="gallery-main">
+      <img id="mainImage" src="assets/images/product-IMG63471.jpg" alt="T-shirt Enkred face">
+    </div>
+    <div class="gallery-thumbs" id="thumbs"></div>
+  </div>
+
+  <div class="product-info">
+    <span class="badge" id="productBadge">Édition limitée · 50 exemplaires</span>
+    <h1 class="serif" id="productTitle">Tirage Juillet — T-shirt blanc</h1>
+    <div class="price" id="productPrice">34,90 €</div>
+
+    <div class="stock-gauge" id="stockGauge">
+      <div class="stock-gauge-top">
+        <span id="stockGaugeCount">On compte les tee-shirts</span>
+        <span id="stockGaugeLeft"></span>
+      </div>
+      <div class="stock-gauge-track-wrap">
+        <div class="stock-gauge-track">
+          <div class="stock-gauge-fill" id="stockGaugeFill"></div>
+        </div>
+        <img id="stockGaugeSqueegee" src="assets/images/squeegee-loading.png" alt="">
+      </div>
+    </div>
+
+    <div class="stock-note" id="productStockNote">
+      Précommande jusqu'au 30 juin. Une fois la campagne close, ton tee-shirt est sérigraphié à la main puis expédié — compte 2 à 3 semaines. Pas d'échange ni de remboursement, alors choisis bien ta taille.
+    </div>
+
+    <form id="preorderForm">
+      <div class="field-row">
+        <div class="field-group">
+          <label for="size">Taille</label>
+          <select id="size" required>
+            <option value="">Choisir…</option>
+            <option>XS</option><option>S</option><option>M</option>
+            <option>L</option><option>XL</option><option>XXL</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="fit">Coupe</label>
+          <select id="fit" required>
+            <option value="">Choisir…</option>
+            <option>Standard</option>
+            <option>Oversize</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="qty">Quantité</label>
+        <input type="number" id="qty" min="1" value="1" required>
+      </div>
+
+      <div class="field-group">
+        <label for="name">Nom et prénom</label>
+        <input type="text" id="name" placeholder="Ton nom" required>
+      </div>
+
+      <div class="field-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="ton@email.com" required>
+      </div>
+
+      <div class="field-group">
+        <label for="message">Message (optionnel)</label>
+        <textarea id="message" rows="2" placeholder="Une précision à ajouter ?"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">Réserver ma précommande</button>
+      <div class="confirm-box" id="confirmBox">
+        Précommande bien reçue ! Tu vas recevoir un email de confirmation avec les infos de règlement — ta précommande ne sera validée qu'une fois le paiement effectué.
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="details">
+  <div class="details-grid">
+    <div>
+      <h3 class="serif">Coupe relaxed fit</h3>
+      <ul>
+        <li>100% coton organique filé et peigné</li>
+        <li>Grammage 215 g/m²</li>
+        <li>Sérigraphié à la main, numéroté individuellement</li>
+      </ul>
+      <img src="assets/images/cert-logos.png" alt="Certifications GOTS, Fair Wear, Oeko-Tex, PETA Vegan" style="max-width:340px; margin-top:16px;">
+    </div>
+    <div>
+      <h3 class="serif">Entretien</h3>
+      <ul>
+        <li>Laver avec des couleurs similaires à 30° maximum</li>
+        <li>Ne pas repasser sur l'impression</li>
+        <li>Laver et repasser sur l'envers</li>
+      </ul>
+      <img src="assets/images/care-icons.png" alt="Conseils de lavage : 30°, pas de sèche-linge, repassage doux, pas de nettoyage à sec" style="max-width:260px; margin-top:16px;">
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <img src="assets/images/logo-full.png" alt="Enkred">
+      <p>Sérigraphie artisanale, culture surf & skate. Fabriqué à Nantes, en séries limitées.</p>
+    </div>
+    <div>
+      <h5>Liens rapides</h5>
+      <a href="product.html">Tirage en cours</a>
+      <a href="collections.html">Drops</a>
+      <a href="about.html">À propos</a>
+      <a href="contact.html">Contact</a>
+      <a href="cgv.html">Conditions générales de vente</a>
+    </div>
+    <div>
+      <h5>Suivez-nous</h5>
+      <a href="https://www.instagram.com/enkred" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.facebook.com/Enkredco" target="_blank" rel="noopener">Facebook</a>
+      <p>#ENKRED</p>
+    </div>
+    <div>
+      <h5>Newsletter</h5>
+      <p>Sois prévenu·e dès l'ouverture du prochain drop.</p>
+      <form class="newsletter-form" id="newsletterForm">
+        <input type="email" id="newsletterEmail" placeholder="ton@email.com" required>
+        <button type="submit">OK</button>
+      </form>
+      <div class="newsletter-note" id="newsletterNote">Merci, tu es inscrit·e !</div>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2026 Enkred — Tous droits réservés</div>
+</footer>
+
+<script>
+  const defaultImages = [
+    'assets/images/product-IMG63471.jpg',
+    'assets/images/product-IMG63481.jpg',
+    'assets/images/product-IMG63491.jpg',
+    'assets/images/product-IMG63501.jpg',
+    'assets/images/product-IMG63531.jpg',
+    'assets/images/product-IMG63541.jpg'
+  ];
+  const thumbs = document.getElementById('thumbs');
+  const mainImage = document.getElementById('mainImage');
+
+  function renderGallery(images) {
+    thumbs.innerHTML = '';
+    images.forEach((src, i) => {
+      const t = document.createElement('img');
+      t.src = src;
+      if (i === 0) { t.classList.add('active'); mainImage.src = src; }
+      t.onclick = () => {
+        mainImage.src = src;
+        thumbs.querySelectorAll('img').forEach(im => im.classList.remove('active'));
+        t.classList.add('active');
+      };
+      thumbs.appendChild(t);
+    });
+  }
+  renderGallery(defaultImages);
+
+  // Charge les infos du tirage en cours depuis data/site-content.json
+  // (modifiable via /admin sans toucher au code)
+  let siteDropDeadline = "30 juin 2026"; // valeur par défaut, écrasée ci-dessous si le fichier est accessible
+  let stockMaxUnits = 50;
+  fetch('data/site-content.json')
+    .then(r => r.json())
+    .then(data => {
+      const d = data.drop || {};
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+      set('productBadge', d.badge);
+      set('productTitle', d.productTitle);
+      set('productPrice', d.price);
+      set('productStockNote', d.stockNote);
+      if (Array.isArray(d.productImages) && d.productImages.length) {
+        renderGallery(d.productImages);
+      }
+      if (d.deadlineFull) {
+        siteDropDeadline = d.deadlineFull;
+        SITE_CONFIG.dropDeadline = d.deadlineFull;
+      }
+      if (d.maxUnits) stockMaxUnits = d.maxUnits;
+    })
+    .catch(() => { /* si le fichier est indisponible, le contenu par défaut du code reste affiché */ });
+
+  // Lancée en parallèle (pas d'attente du fetch ci-dessus) pour un affichage plus rapide
+  loadStockGauge();
+
+  // Jauge de stock — nombre de tee-shirts déjà réservés, lu depuis le Google Sheet
+  const stockMessages = ['On compte les tee-shirts', 'Presque prêt', 'Un dernier coup de raclette'];
+  let stockMsgIndex = 0;
+  const stockMsgTimer = setInterval(() => {
+    stockMsgIndex = (stockMsgIndex + 1) % stockMessages.length;
+    const el = document.getElementById('stockGaugeCount');
+    if (el) el.textContent = stockMessages[stockMsgIndex];
+  }, 2000);
+
+  function loadStockGauge() {
+    const GOOGLE_SCRIPT_URL_COUNT = "https://script.google.com/macros/s/AKfycbzQKYv1NvS0fJdxjEbkzLAHu5rZXNGORsrtjfi2yWMKGNCAZP0HbTAIN0uq99xE4HfV/exec";
+    const minDisplayTime = new Promise(resolve => setTimeout(resolve, 6500));
+    const fetchCount = fetch(GOOGLE_SCRIPT_URL_COUNT).then(r => r.json());
+
+    Promise.all([fetchCount, minDisplayTime])
+      .then(([data]) => {
+        clearInterval(stockMsgTimer);
+        const count = Math.min(data.count || 0, stockMaxUnits);
+        const left = stockMaxUnits - count;
+        const pct = (count / stockMaxUnits * 100) + '%';
+
+        const fill = document.getElementById('stockGaugeFill');
+        const sq = document.getElementById('stockGaugeSqueegee');
+        fill.classList.add('settled');
+        sq.classList.add('settled');
+        fill.style.width = pct;
+        sq.style.left = 'calc(' + pct + ' - 20px)';
+
+        document.getElementById('stockGaugeCount').textContent = count + ' / ' + stockMaxUnits + ' réservés';
+        const leftEl = document.getElementById('stockGaugeLeft');
+        leftEl.textContent = left > 0 ? ('Plus que ' + left + ' tee-shirts') : 'Édition épuisée';
+        if (left <= 10) leftEl.classList.add('urgent');
+      })
+      .catch(() => {
+        clearInterval(stockMsgTimer);
+        document.getElementById('stockGauge').style.display = 'none';
+      });
+  }
+
+  // ============================================================
+  // CONFIG — à modifier à chaque nouveau drop.
+  // Cette date est utilisée dans l'email de confirmation.
+  // (Une fois le code restructuré, elle sera aussi lue automatiquement
+  // par la page d'accueil pour éviter de la changer à deux endroits.)
+  // ============================================================
+  const SITE_CONFIG = {
+    dropDeadline: "30 juin 2026"
+  };
+
+  // TODO : remplace ces 4 valeurs une fois tes comptes Google Apps Script et EmailJS prêts
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQKYv1NvS0fJdxjEbkzLAHu5rZXNGORsrtjfi2yWMKGNCAZP0HbTAIN0uq99xE4HfV/exec";
+  const EMAILJS_SERVICE_ID = "service_j920499";
+  const EMAILJS_TEMPLATE_ID = "template_co5iqgr";
+  const EMAILJS_PUBLIC_KEY = "R-QLf-s31ga7laVd5";
+
+  if (window.emailjs && EMAILJS_PUBLIC_KEY.indexOf("COLLE_ICI") === -1) {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }
+
+  // Preorder form
+  const form = document.getElementById('preorderForm');
+  const confirmBox = document.getElementById('confirmBox');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Envoi en cours…';
+
+    const payload = {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      size: document.getElementById('size').value,
+      fit: document.getElementById('fit').value,
+      qty: document.getElementById('qty').value,
+      message: document.getElementById('message').value,
+      deadline: SITE_CONFIG.dropDeadline
+    };
+
+    const readyToSend = GOOGLE_SCRIPT_URL.indexOf("COLLE_ICI") === -1
+      && EMAILJS_SERVICE_ID.indexOf("COLLE_ICI") === -1;
+
+    const finish = () => {
+      confirmBox.classList.add('visible');
+      submitBtn.textContent = 'Réserver ma précommande';
+      submitBtn.disabled = false;
+      form.reset();
+    };
+
+    if (!readyToSend) {
+      // Branchement pas encore configuré : on garde le comportement de test.
+      setTimeout(finish, 700);
+      return;
+    }
+
+    // 1. Enregistre la précommande dans le Google Sheet
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload)
+    }).finally(() => {
+      // 2. Envoie l'email de confirmation au client
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, payload)
+        .finally(finish);
+    });
+  });
+
+</script>
+
+<script>
+  const GOOGLE_SCRIPT_URL_NL = "https://script.google.com/macros/s/AKfycbzQKYv1NvS0fJdxjEbkzLAHu5rZXNGORsrtjfi2yWMKGNCAZP0HbTAIN0uq99xE4HfV/exec";
+  const nlForm = document.getElementById('newsletterForm');
+  const nlNote = document.getElementById('newsletterNote');
+  nlForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const email = document.getElementById('newsletterEmail').value;
+    fetch(GOOGLE_SCRIPT_URL_NL, {
+      method: 'POST', mode: 'no-cors',
+      body: JSON.stringify({ type: 'newsletter', email: email })
+    }).finally(() => {
+      nlNote.classList.add('visible');
+      nlForm.reset();
+    });
+  });
+</script>
+
+<div class="halftone-glow" id="halftoneGlow"></div>
+<img class="enkred-cursor-icon" id="cursorIcon" src="assets/images/cursor-squeegee.png" alt="">
+
+<script>
+  document.body.classList.add('page-ready');
+  var isTouch = window.matchMedia('(pointer: coarse)').matches;
+  if (!isTouch) {
+    document.body.classList.add('has-custom-cursor');
+    var icon = document.getElementById('cursorIcon');
+    var glow = document.getElementById('halftoneGlow');
+    var defaultSrc = 'assets/images/cursor-squeegee.png';
+    var hoverSrc = 'assets/images/cursor-squeegee-hover.png';
+
+    window.addEventListener('mousemove', function(e){
+      icon.style.left = e.clientX + 'px'; icon.style.top = e.clientY + 'px';
+      glow.style.setProperty('--mx', e.clientX + 'px');
+      glow.style.setProperty('--my', e.clientY + 'px');
+    });
+
+    document.querySelectorAll('a, button, .btn, input, textarea').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ icon.src = hoverSrc; });
+      el.addEventListener('mouseleave', function(){ icon.src = defaultSrc; });
+    });
+  } else {
+    document.getElementById('cursorIcon').style.display = 'none';
+    document.getElementById('halftoneGlow').style.display = 'none';
+  }
+
+  document.querySelectorAll('.btn').forEach(function(btn){
+    btn.style.transition = 'transform .15s ease-out';
+    btn.addEventListener('mousemove', function(e){
+      var r = btn.getBoundingClientRect();
+      var dx = (e.clientX - (r.left + r.width/2)) * 0.25;
+      var dy = (e.clientY - (r.top + r.height/2)) * 0.25;
+      btn.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    });
+    btn.addEventListener('mouseleave', function(){ btn.style.transform = 'translate(0,0)'; });
+  });
+
+  document.querySelectorAll('a[href]').forEach(function(link){
+    var href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('http') || link.target === '_blank') return;
+    link.addEventListener('click', function(e){
+      e.preventDefault();
+      document.body.classList.remove('page-ready');
+      document.body.classList.add('page-leaving');
+      setTimeout(function(){ window.location.href = href; }, 220);
+    });
+  });
+</script>
+
+<script>
+  var navToggle = document.getElementById('navToggle');
+  var navEl = document.querySelector('header nav');
+  if (navToggle && navEl) {
+    navToggle.addEventListener('click', function(){
+      navEl.classList.toggle('nav-open');
+    });
+    navEl.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click', function(){ navEl.classList.remove('nav-open'); });
+    });
+  }
+</script>
+</body>
+</html>
